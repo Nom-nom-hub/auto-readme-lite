@@ -1092,60 +1092,282 @@ export default UserList;`
         return;
       }
 
-      // Simple parser for demo purposes
+      // Enhanced parser for TypeScript and modern JavaScript
+      // Note: This is a simplified regex-based parser for demo purposes.
+      // For production use, consider using a proper AST parser (TypeScript compiler API or Babel)
+      // for more reliable export and definition detection.
       const exports = [];
       const cliCommands = [];
       const functions = [];
+      const classes = [];
+      const interfaces = [];
+      const types = [];
+      const constants = [];
       
-      // Extract function declarations
-      const functionMatches = code.match(/function\s+(\w+)\s*\([^)]*\)\s*{/g);
-      if (functionMatches) {
-        functionMatches.forEach(match => {
-          const name = match.match(/function\s+(\w+)/)[1];
-          functions.push(name);
+      // Extract ES6 exports with improved pattern matching
+      const exportPatterns = [
+        // export const/let/var (including destructuring)
+        /export\s+(?:const|let|var)\s+(\w+)/g,
+        // export function
+        /export\s+function\s+(\w+)/g,
+        // export class
+        /export\s+class\s+(\w+)/g,
+        // export interface
+        /export\s+interface\s+(\w+)/g,
+        // export type
+        /export\s+type\s+(\w+)/g,
+        // export default (function, class, or identifier)
+        /export\s+default\s+(?:function\s+)?(\w+)/g,
+        // export default class
+        /export\s+default\s+class\s+(\w+)/g,
+        // export default interface
+        /export\s+default\s+interface\s+(\w+)/g,
+        // export default type
+        /export\s+default\s+type\s+(\w+)/g
+      ];
+      
+      // Handle basic export patterns
+      exportPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/\s+(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            if (name && !exports.includes(name)) {
+              exports.push(name);
+            }
+          });
+        }
+      });
+      
+      // Handle re-exports: export * from './module' or export { foo } from './module'
+      const reExportPattern = /export\s*(\*|\{[^}]*\})\s+from\s+['"`][^'"`]+['"`]/g;
+      let reExportMatch;
+      while ((reExportMatch = reExportPattern.exec(code)) !== null) {
+        const exportContent = reExportMatch[1];
+        if (exportContent === '*') {
+          // export * from './module' - we can't determine specific names
+          // but we can note that there are re-exports
+          if (!exports.includes('*re-exports*')) {
+            exports.push('*re-exports*');
+          }
+        } else {
+          // export { foo, bar } from './module'
+          const reExportList = exportContent.replace(/[{}]/g, '');
+          const reExportItems = reExportList.split(',').map(item => item.trim());
+          reExportItems.forEach(item => {
+            const asMatch = item.match(/^(\w+)\s+as\s+\w+$/);
+            const simpleMatch = item.match(/^(\w+)$/);
+            const name = (asMatch && asMatch[1]) || (simpleMatch && simpleMatch[1]);
+            if (name && !exports.includes(name)) {
+              exports.push(name);
+            }
+          });
+        }
+      }
+      
+      // Handle destructured exports: export { foo, bar, baz as qux }
+      const destructuredExportPattern = /export\s*\{([^}]+)\}/g;
+      let destructuredMatch;
+      while ((destructuredMatch = destructuredExportPattern.exec(code)) !== null) {
+        const exportList = destructuredMatch[1];
+        // Split by comma and handle each export, accounting for nested objects
+        const exportItems = exportList.split(',').map(item => item.trim());
+        exportItems.forEach(item => {
+          // Skip empty items
+          if (!item) return;
+          
+          // Handle "name as alias" pattern: foo as bar
+          const asMatch = item.match(/^(\w+)\s+as\s+\w+$/);
+          if (asMatch) {
+            const name = asMatch[1];
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+            return;
+          }
+          
+          // Handle simple identifier: foo
+          const simpleMatch = item.match(/^(\w+)$/);
+          if (simpleMatch) {
+            const name = simpleMatch[1];
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+            return;
+          }
+          
+          // Handle object destructuring: { foo, bar }
+          const objectMatch = item.match(/^\{([^}]+)\}$/);
+          if (objectMatch) {
+            const nestedExports = objectMatch[1].split(',').map(nested => nested.trim());
+            nestedExports.forEach(nested => {
+              const nestedAsMatch = nested.match(/^(\w+)\s+as\s+\w+$/);
+              const nestedSimpleMatch = nested.match(/^(\w+)$/);
+              const name = (nestedAsMatch && nestedAsMatch[1]) || (nestedSimpleMatch && nestedSimpleMatch[1]);
+              if (name && !exports.includes(name)) {
+                exports.push(name);
+              }
+            });
+            return;
+          }
+          
+          // Handle default exports with destructuring: default as foo
+          const defaultAsMatch = item.match(/^default\s+as\s+(\w+)$/);
+          if (defaultAsMatch) {
+            const name = defaultAsMatch[1];
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+            return;
+          }
         });
       }
 
-      // Extract arrow functions
-      const arrowMatches = code.match(/(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g);
-      if (arrowMatches) {
-        arrowMatches.forEach(match => {
-          const name = match.match(/(\w+)\s*[:=]/)[1];
-          if (name !== 'const' && name !== 'let' && name !== 'var') {
+      // Extract function declarations (including async, generator, and TypeScript type annotations)
+      const functionMatches = code.match(/(?:export\s+)?(?:async\s+)?function\s*\*?\s+(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>{}\[\],\s|]+)?/g);
+      if (functionMatches) {
+        functionMatches.forEach(match => {
+          // Match function name after 'function', possibly with '*', and allow for type annotations
+          const nameMatch = match.match(/function\s*\*?\s+(\w+)/);
+          const name = nameMatch && nameMatch[1];
+          if (name && !functions.includes(name)) {
             functions.push(name);
           }
         });
       }
 
-      // Extract CLI commands
-      const cliMatches = code.match(/\.command\(['"`]([^'"`]+)['"`]/g);
-      if (cliMatches) {
-        cliMatches.forEach(match => {
-          const command = match.match(/\.command\(['"`]([^'"`]+)['"`]/)[1];
-          cliCommands.push(command);
-        });
-      }
+      // Extract arrow functions with improved pattern matching
+      const arrowPatterns = [
+        // const foo = () => {}
+        /(?:const|let|var)\s+(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g,
+        // const foo = async () => {}
+        /(?:const|let|var)\s+(\w+)\s*[:=]\s*async\s*\([^)]*\)\s*=>/g,
+        // const foo = (): ReturnType => {}
+        /(?:const|let|var)\s+(\w+)\s*[:=]\s*\([^)]*\)\s*:\s*[\w<>{}\[\],\s|]+\s*=>/g,
+        // export const foo = () => {}
+        /export\s+(?:const|let|var)\s+(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g
+      ];
+      
+      arrowPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/(?:const|let|var|export\s+(?:const|let|var))\s+(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            if (name && !functions.includes(name)) {
+              functions.push(name);
+            }
+          });
+        }
+      });
 
-      // Extract exports
-      const exportMatches = code.match(/module\.exports\s*=\s*{([^}]+)}/);
-      if (exportMatches) {
-        const exportContent = exportMatches[1];
+      // Extract classes, interfaces, types, and constants in a single pass
+      const declarationPatterns = [
+        { pattern: /(?:export\s+)?class\s+(\w+)/g, target: classes },
+        { pattern: /(?:export\s+)?interface\s+(\w+)/g, target: interfaces },
+        { pattern: /(?:export\s+)?type\s+(\w+)/g, target: types },
+        { pattern: /(?:export\s+)?(?:const|let|var)\s+(\w+)/g, target: constants }
+      ];
+      
+      // Extract method definitions from classes and interfaces
+      const methodPatterns = [
+        // Class methods: methodName() {}
+        /(?:public|private|protected|static)?\s*(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>{}\[\],\s|]+)?\s*\{/g,
+        // Interface methods: methodName(): ReturnType
+        /(\w+)\s*\([^)]*\)\s*:\s*[\w<>{}\[\],\s|]+/g,
+        // Async methods: async methodName() {}
+        /async\s+(\w+)\s*\([^)]*\)/g,
+        // Generator methods: *methodName() {}
+        /\*\s*(\w+)\s*\([^)]*\)/g
+      ];
+      
+      methodPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/(?:public|private|protected|static|async|\*)?\s*(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            // Filter out common non-method names
+            const excludeList = ['constructor', 'get', 'set', 'if', 'for', 'while', 'switch', 'try', 'catch'];
+            if (name && !excludeList.includes(name) && !functions.includes(name)) {
+              functions.push(name);
+            }
+          });
+        }
+      });
+      
+      declarationPatterns.forEach(({ pattern, target }) => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/\s+(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            if (name && !target.includes(name)) {
+              target.push(name);
+            }
+          });
+        }
+      });
+
+      // CLI command extraction:
+      // This pattern matches common usages in Commander.js, yargs, and similar frameworks:
+      //   .command('name') or program.command('name')
+      // Note: This may not cover all CLI libraries or custom command setups.
+      // Extend or adjust as needed for other frameworks.
+      const cliPatterns = [
+        /\.command\(['"`]([^'"`]+)['"`]/g,
+        /program\.command\(['"`]([^'"`]+)['"`]/g
+      ];
+      
+      cliPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const command = match.match(/['"`]([^'"`]+)['"`]/)[1];
+            if (!cliCommands.includes(command)) {
+              cliCommands.push(command);
+            }
+          });
+        }
+      });
+
+      // Extract CommonJS exports
+      const commonjsMatches = code.match(/module\.exports\s*=\s*\{([^}]+)\}/);
+      if (commonjsMatches) {
+        const exportContent = commonjsMatches[1];
         const exportNames = exportContent.match(/(\w+)/g);
         if (exportNames) {
-          exports.push(...exportNames);
+          exportNames.forEach(name => {
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+          });
         }
       }
 
       // Generate README content
       let readmeContent = '';
       
-      if (functions.length > 0 || exports.length > 0) {
+      const allItems = functions.concat(classes).concat(interfaces).concat(types).concat(constants).concat(exports);
+      const uniqueItems = allItems.filter((item, index) => allItems.indexOf(item) === index);
+      
+      if (uniqueItems.length > 0) {
         readmeContent += '## API Reference\n\n';
         
-        [...new Set([...functions, ...exports])].forEach(item => {
+        uniqueItems.forEach(item => {
           readmeContent += '### `' + item + '`\n\n';
-          readmeContent += '**Type:** Function\n\n';
-          readmeContent += '**File:** `demo.js`\n\n';
+          
+          // Determine type
+          let type = 'Export';
+          if (classes.includes(item)) type = 'Class';
+          else if (interfaces.includes(item)) type = 'Interface';
+          else if (types.includes(item)) type = 'Type';
+          else if (functions.includes(item)) type = 'Function';
+          else if (constants.includes(item)) type = 'Constant';
+          
+          readmeContent += '**Type:** ' + type + '\n\n';
+          readmeContent += '**File:** `demo.ts`\n\n';
           readmeContent += '---\n\n';
         });
       }
@@ -1159,7 +1381,7 @@ export default UserList;`
       }
       
       if (!readmeContent) {
-        readmeContent = '<p class="placeholder">No exports or CLI commands found. Try adding some functions or CLI commands!</p>';
+        readmeContent = 'No exports or CLI commands found. Try adding some functions or CLI commands!';
       }
 
       // Convert markdown to HTML for better display
