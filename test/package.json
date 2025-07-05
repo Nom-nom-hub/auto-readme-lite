@@ -1,0 +1,30 @@
+{
+  "name": "auto-readme-test-project",
+  "version": "1.0.0",
+  "description": "Test project for auto-readme-lite",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest",
+    "build": "tsc",
+    "dev": "nodemon index.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "clean": "rm -rf dist",
+    "prepublish": "npm run build",
+    "postinstall": "echo 'Installation complete!'",
+    "multi-line-script": "echo 'Line 1' && echo 'Line 2' && echo 'Line 3'",
+    "weird:name!": "echo 'Weird script name'"
+  },
+  "keywords": ["test", "auto-readme"],
+  "author": "Test User",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "yargs": "^17.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  }
+} 

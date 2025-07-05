@@ -1,0 +1,13 @@
+{
+  "name": "example-project",
+  "version": "0.1.0",
+  "description": "Example project for testing auto-readme-lite",
+  "main": "test.js",
+  "scripts": {
+    "start": "node test.js",
+    "add": "node test.js add 1 2"
+  },
+  "dependencies": {
+    "commander": "^11.0.0"
+  }
+} 
