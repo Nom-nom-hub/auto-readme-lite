@@ -1106,7 +1106,7 @@ export default UserList;`
       
       // Extract ES6 exports with improved pattern matching
       const exportPatterns = [
-        // export const/let/var
+        // export const/let/var (including destructuring)
         /export\s+(?:const|let|var)\s+(\w+)/g,
         // export function
         /export\s+function\s+(\w+)/g,
@@ -1116,8 +1116,14 @@ export default UserList;`
         /export\s+interface\s+(\w+)/g,
         // export type
         /export\s+type\s+(\w+)/g,
-        // export default
-        /export\s+default\s+(?:function\s+)?(\w+)/g
+        // export default (function, class, or identifier)
+        /export\s+default\s+(?:function\s+)?(\w+)/g,
+        // export default class
+        /export\s+default\s+class\s+(\w+)/g,
+        // export default interface
+        /export\s+default\s+interface\s+(\w+)/g,
+        // export default type
+        /export\s+default\s+type\s+(\w+)/g
       ];
       
       // Handle basic export patterns
@@ -1134,20 +1140,86 @@ export default UserList;`
         }
       });
       
+      // Handle re-exports: export * from './module' or export { foo } from './module'
+      const reExportPattern = /export\s*(\*|\{[^}]*\})\s+from\s+['"`][^'"`]+['"`]/g;
+      let reExportMatch;
+      while ((reExportMatch = reExportPattern.exec(code)) !== null) {
+        const exportContent = reExportMatch[1];
+        if (exportContent === '*') {
+          // export * from './module' - we can't determine specific names
+          // but we can note that there are re-exports
+          if (!exports.includes('*re-exports*')) {
+            exports.push('*re-exports*');
+          }
+        } else {
+          // export { foo, bar } from './module'
+          const reExportList = exportContent.replace(/[{}]/g, '');
+          const reExportItems = reExportList.split(',').map(item => item.trim());
+          reExportItems.forEach(item => {
+            const asMatch = item.match(/^(\w+)\s+as\s+\w+$/);
+            const simpleMatch = item.match(/^(\w+)$/);
+            const name = (asMatch && asMatch[1]) || (simpleMatch && simpleMatch[1]);
+            if (name && !exports.includes(name)) {
+              exports.push(name);
+            }
+          });
+        }
+      }
+      
       // Handle destructured exports: export { foo, bar, baz as qux }
       const destructuredExportPattern = /export\s*\{([^}]+)\}/g;
       let destructuredMatch;
       while ((destructuredMatch = destructuredExportPattern.exec(code)) !== null) {
         const exportList = destructuredMatch[1];
-        // Split by comma and handle each export
+        // Split by comma and handle each export, accounting for nested objects
         const exportItems = exportList.split(',').map(item => item.trim());
         exportItems.forEach(item => {
-          // Handle "name as alias" pattern
+          // Skip empty items
+          if (!item) return;
+          
+          // Handle "name as alias" pattern: foo as bar
           const asMatch = item.match(/^(\w+)\s+as\s+\w+$/);
+          if (asMatch) {
+            const name = asMatch[1];
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+            return;
+          }
+          
+          // Handle simple identifier: foo
           const simpleMatch = item.match(/^(\w+)$/);
-          const name = (asMatch && asMatch[1]) || (simpleMatch && simpleMatch[1]);
-          if (name && !exports.includes(name)) {
-            exports.push(name);
+          if (simpleMatch) {
+            const name = simpleMatch[1];
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+            return;
+          }
+          
+          // Handle object destructuring: { foo, bar }
+          const objectMatch = item.match(/^\{([^}]+)\}$/);
+          if (objectMatch) {
+            const nestedExports = objectMatch[1].split(',').map(nested => nested.trim());
+            nestedExports.forEach(nested => {
+              const nestedAsMatch = nested.match(/^(\w+)\s+as\s+\w+$/);
+              const nestedSimpleMatch = nested.match(/^(\w+)$/);
+              const name = (nestedAsMatch && nestedAsMatch[1]) || (nestedSimpleMatch && nestedSimpleMatch[1]);
+              if (name && !exports.includes(name)) {
+                exports.push(name);
+              }
+            });
+            return;
+          }
+          
+          // Handle default exports with destructuring: default as foo
+          const defaultAsMatch = item.match(/^default\s+as\s+(\w+)$/);
+          if (defaultAsMatch) {
+            const name = defaultAsMatch[1];
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+            return;
           }
         });
       }
