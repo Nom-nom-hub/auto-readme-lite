@@ -1225,7 +1225,7 @@ export default UserList;`
       }
 
       // Extract function declarations (including async, generator, and TypeScript type annotations)
-      const functionMatches = code.match(/(?:export\s+)?(?:async\s+)?function\s*\*?\s+(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>{}\[\],\s]+)?/g);
+      const functionMatches = code.match(/(?:export\s+)?(?:async\s+)?function\s*\*?\s+(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>{}\[\],\s|]+)?/g);
       if (functionMatches) {
         functionMatches.forEach(match => {
           // Match function name after 'function', possibly with '*', and allow for type annotations
@@ -1237,16 +1237,30 @@ export default UserList;`
         });
       }
 
-      // Extract arrow functions
-      const arrowMatches = code.match(/(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g);
-      if (arrowMatches) {
-        arrowMatches.forEach(match => {
-          const name = match.match(/(\w+)\s*[:=]/)[1];
-          if (name !== 'const' && name !== 'let' && name !== 'var' && !functions.includes(name)) {
-            functions.push(name);
-          }
-        });
-      }
+      // Extract arrow functions with improved pattern matching
+      const arrowPatterns = [
+        // const foo = () => {}
+        /(?:const|let|var)\s+(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g,
+        // const foo = async () => {}
+        /(?:const|let|var)\s+(\w+)\s*[:=]\s*async\s*\([^)]*\)\s*=>/g,
+        // const foo = (): ReturnType => {}
+        /(?:const|let|var)\s+(\w+)\s*[:=]\s*\([^)]*\)\s*:\s*[\w<>{}\[\],\s|]+\s*=>/g,
+        // export const foo = () => {}
+        /export\s+(?:const|let|var)\s+(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g
+      ];
+      
+      arrowPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/(?:const|let|var|export\s+(?:const|let|var))\s+(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            if (name && !functions.includes(name)) {
+              functions.push(name);
+            }
+          });
+        }
+      });
 
       // Extract classes, interfaces, types, and constants in a single pass
       const declarationPatterns = [
@@ -1255,6 +1269,33 @@ export default UserList;`
         { pattern: /(?:export\s+)?type\s+(\w+)/g, target: types },
         { pattern: /(?:export\s+)?(?:const|let|var)\s+(\w+)/g, target: constants }
       ];
+      
+      // Extract method definitions from classes and interfaces
+      const methodPatterns = [
+        // Class methods: methodName() {}
+        /(?:public|private|protected|static)?\s*(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>{}\[\],\s|]+)?\s*\{/g,
+        // Interface methods: methodName(): ReturnType
+        /(\w+)\s*\([^)]*\)\s*:\s*[\w<>{}\[\],\s|]+/g,
+        // Async methods: async methodName() {}
+        /async\s+(\w+)\s*\([^)]*\)/g,
+        // Generator methods: *methodName() {}
+        /\*\s*(\w+)\s*\([^)]*\)/g
+      ];
+      
+      methodPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/(?:public|private|protected|static|async|\*)?\s*(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            // Filter out common non-method names
+            const excludeList = ['constructor', 'get', 'set', 'if', 'for', 'while', 'switch', 'try', 'catch'];
+            if (name && !excludeList.includes(name) && !functions.includes(name)) {
+              functions.push(name);
+            }
+          });
+        }
+      });
       
       declarationPatterns.forEach(({ pattern, target }) => {
         const matches = code.match(pattern);
