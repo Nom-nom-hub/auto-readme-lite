@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>auto-readme-lite</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --secondary: #0f172a;
+      --bg: #f8fafc;
+      --card: #fff;
+      --accent: #06b6d4;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.07);
+      --text-muted: #334155;
+      --code-bg: #f1f5f9;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    [data-theme="dark"] {
+      --primary: #60a5fa;
+      --secondary: #f1f5f9;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #22d3ee;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+      --text-muted: #94a3b8;
+      --code-bg: #334155;
+    }
+    
+    * {
+      transition: var(--transition);
+    }
+    
+    html, body {
+      margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background: var(--bg); color: var(--secondary); }
+    
+    header {
+      background: var(--primary); 
+      color: #fff; 
+      padding: 2.5rem 0 1.5rem 0; 
+      text-align: center; 
+      box-shadow: var(--shadow); 
+      position: relative; 
+    }
+    
+    [data-theme="dark"] header {
+      background: var(--bg); 
+      color: var(--secondary); 
+    }
+    
+    [data-theme="dark"] header .icon {
+      color: var(--secondary); 
+    }
+    
+    [data-theme="dark"] header h1 {
+      color: var(--secondary); 
+    }
+    
+    [data-theme="dark"] header p {
+      color: var(--secondary); 
+    }
+    
+    [data-theme="dark"] nav a {
+      color: var(--secondary); 
+    }
+    
+    [data-theme="dark"] nav a:hover {
+      color: var(--accent); 
+    }
+    
+    header .icon {
+      font-size: 3.5rem; margin-bottom: 0.5rem; color: #fff; }
+    
+    header h1 { font-size: 2.7rem; margin: 0.2rem 0 0.5rem 0; font-weight: 700; letter-spacing: -1px; }
+    
+    header p { font-size: 1.25rem; margin: 0 auto; max-width: 600px; }
+    
+    .hero-description {
+      font-size: 1.25rem; 
+      margin: 0 auto; 
+      max-width: 700px; 
+      line-height: 1.6; 
+      color: rgba(255, 255, 255, 0.95); 
+    }
+    
+    .hero-description strong {
+      color: #fff; 
+      font-weight: 700; 
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
+    }
+    
+    [data-theme="dark"] .hero-description {
+      color: rgba(241, 245, 249, 0.95); 
+    }
+    
+    [data-theme="dark"] .hero-description strong {
+      color: #f1f5f9; 
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); 
+    }
+    
+    .theme-toggle {
+      position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.1); border: none; border-radius: 50px; padding: 0.5rem; cursor: pointer; color: #fff; font-size: 1.2rem; backdrop-filter: blur(10px); transition: var(--transition); }
+    
+    .theme-toggle:hover {
+      background: rgba(255,255,255,0.2); transform: scale(1.05); }
+    
+    [data-theme="dark"] .theme-toggle {
+      background: rgba(0,0,0,0.2); 
+      color: var(--secondary); 
+    }
+    
+    [data-theme="dark"] .theme-toggle:hover {
+      background: rgba(0,0,0,0.3); 
+    }
+    
+    nav {
+      margin: 1.5rem 0 0.5rem 0; text-align: center; }
+    
+    nav a {
+      color: #fff; text-decoration: none; margin: 0 1.2rem; font-weight: 500; font-size: 1.1rem; transition: var(--transition); }
+    
+    nav a:hover { color: var(--accent); }
+    
+    .container { max-width: 900px; margin: 2.5rem auto; padding: 0 1.5rem; }
+    
+    .card {
+      background: var(--card); 
+      border-radius: var(--radius); 
+      box-shadow: var(--shadow); 
+      padding: 2rem 2rem 1.5rem 2rem; 
+      margin-bottom: 3rem; 
+    }
+    
+    .features {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    
+    .feature {
+      background: var(--bg); 
+      border-radius: var(--radius); 
+      padding: 1.5rem 1rem; 
+      box-shadow: 0 2px 8px rgba(59,130,246,0.07); 
+      text-align: center; 
+      min-height: 180px; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+    }
+    
+    .feature i { 
+      font-size: 2rem; 
+      color: var(--primary); 
+      margin-bottom: 0.5rem; 
+    }
+    
+    .feature h3 { 
+      margin: 0.5rem 0 0.3rem 0; 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+    }
+    
+    .feature p { 
+      font-size: 0.98rem; 
+      color: var(--text-muted); 
+      line-height: 1.5; 
+      margin: 0; 
+    }
+    
+    pre, code { font-family: 'Fira Mono', monospace; background: var(--code-bg); border-radius: 7px; padding: 0.5rem 0.7rem; font-size: 1rem; }
+    
+    pre { overflow-x: auto; margin: 1.2rem 0; }
+    
+    .example-output { 
+      background: var(--card); 
+      border: 2px solid var(--code-bg); 
+      border-radius: var(--radius); 
+      padding: 1.5rem; 
+      margin: 1.5rem 0; 
+      font-size: 0.98rem; 
+      line-height: 1.6; 
+    }
+    
+    .example-output h2 {
+      color: var(--primary); 
+      font-size: 1.4rem; 
+      margin: 1.5rem 0 1rem 0; 
+      border-bottom: 2px solid var(--primary); 
+      padding-bottom: 0.5rem; 
+    }
+    
+    .example-output h3 {
+      color: var(--accent); 
+      font-size: 1.2rem; 
+      margin: 1.2rem 0 0.8rem 0; 
+    }
+    
+    .example-output strong {
+      color: var(--primary); 
+    }
+    
+    .example-output code {
+      background: var(--code-bg); 
+      padding: 0.2rem 0.4rem; 
+      border-radius: 4px; 
+      font-size: 0.85rem; 
+    }
+    
+    .example-output ul {
+      margin: 0.5rem 0; 
+      padding-left: 1.5rem; 
+    }
+    
+    .example-output li {
+      margin: 0.3rem 0; 
+    }
+    
+    .example-output hr {
+      border: none; 
+      border-top: 1px solid var(--code-bg); 
+      margin: 1rem 0; 
+    }
+    
+    .example-output p {
+      margin: 0.5rem 0; 
+    }
+    
+    .how-it-works {
+      display: flex; 
+      flex-direction: column; 
+      gap: 1.5rem; 
+      margin-top: 1.5rem; 
+    }
+    
+    .step {
+      display: flex; 
+      align-items: flex-start; 
+      gap: 1rem; 
+      padding: 1.2rem; 
+      background: var(--bg); 
+      border-radius: var(--radius); 
+      border: 1px solid var(--code-bg); 
+      transition: var(--transition); 
+    }
+    
+    .step:hover {
+      transform: translateY(-2px); 
+      box-shadow: var(--shadow); 
+      border-color: var(--primary); 
+    }
+    
+    .step-icon {
+      font-size: 2rem; 
+      min-width: 3rem; 
+      text-align: center; 
+      padding: 0.5rem; 
+      background: var(--primary); 
+      color: #fff; 
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    
+    .step-content h3 {
+      margin: 0 0 0.5rem 0; 
+      color: var(--primary); 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+    }
+    
+    .step-content p {
+      margin: 0; 
+      color: var(--text-muted); 
+      line-height: 1.5; 
+    }
+    
+    .step-content code {
+      background: var(--code-bg); 
+      padding: 0.2rem 0.4rem; 
+      border-radius: 4px; 
+      font-size: 0.85rem; 
+    }
+    
+    .step-content strong {
+      color: var(--accent); 
+      font-weight: 600; 
+    }
+    
+    .quick-start, .usage-content {
+      display: grid; 
+      grid-template-columns: 1fr; 
+      gap: 2rem; 
+      margin-top: 2rem; 
+    }
+    
+    .command-block {
+      background: var(--card); 
+      border: 2px solid var(--code-bg); 
+      border-radius: var(--radius); 
+      padding: 0; 
+      transition: var(--transition); 
+      box-shadow: var(--shadow); 
+      position: relative; 
+      overflow: hidden; 
+    }
+    
+    .command-block:hover {
+      border-color: var(--primary); 
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+    }
+    
+    .command-block-header {
+      background: var(--primary); 
+      color: #fff; 
+      padding: 1rem 1.5rem; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+    }
+    
+    .command-block-header h3 {
+      margin: 0; 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+    }
+    
+    .command-block-header h3::before {
+      content: '⚡'; 
+      font-size: 0.9rem; 
+    }
+    
+    .copy-btn {
+      background: rgba(255,255,255,0.2); 
+      border: none; 
+      color: #fff; 
+      padding: 0.5rem 1rem; 
+      border-radius: var(--radius); 
+      cursor: pointer; 
+      font-size: 0.85rem; 
+      font-weight: 600; 
+      transition: var(--transition); 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+    }
+    
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.3); 
+      transform: translateY(-1px); 
+    }
+    
+    .copy-btn.copied {
+      background: var(--accent); 
+    }
+    
+    .command-block-content {
+      padding: 1.5rem; 
+    }
+    
+    .command-block p {
+      color: var(--text-muted); 
+      margin: 0 0 1rem 0; 
+      font-size: 0.95rem; 
+      line-height: 1.6; 
+    }
+    
+    .command-block pre {
+      margin: 0; 
+      background: var(--bg); 
+      border: 1px solid var(--code-bg); 
+      border-radius: var(--radius); 
+      overflow-x: auto; 
+      padding: 1.5rem; 
+      font-size: 0.9rem; 
+      line-height: 1.5; 
+      position: relative; 
+      cursor: text; 
+      user-select: text; 
+    }
+    
+    .command-block pre:hover {
+      border-color: var(--primary); 
+    }
+    
+    .links { text-align: center; margin: 2.5rem 0 1.5rem 0; }
+    
+    .links a {
+      display: inline-block; margin: 0 1.2rem; color: var(--primary); font-weight: 600; text-decoration: none; font-size: 1.1rem; transition: var(--transition); }
+    
+    .links a:hover { color: var(--accent); }
+    
+    /* Demo Styles */
+    .demo-controls {
+      display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; }
+    
+    .demo-controls select {
+      flex: 1; padding: 0.7rem; border: 2px solid var(--primary); border-radius: var(--radius); background: var(--card); color: var(--secondary); font-size: 1rem; }
+    
+    .clear-btn {
+      padding: 0.7rem 1.2rem; background: var(--text-muted); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; transition: var(--transition); }
+    
+    .clear-btn:hover { background: var(--secondary); }
+    
+    .demo-container {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem; }
+    
+    .demo-input, .demo-output {
+      display: flex; flex-direction: column; }
+    
+    .demo-input h3, .demo-output h3 {
+      margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 700; }
+    
+    #code-input {
+      flex: 1; min-height: 300px; padding: 1rem; border: 2px solid var(--code-bg); border-radius: var(--radius); background: var(--card); color: var(--secondary); font-family: 'Fira Mono', monospace; font-size: 0.9rem; resize: vertical; }
+    
+    .readme-preview {
+      flex: 1; min-height: 300px; padding: 1rem; border: 2px solid var(--code-bg); border-radius: var(--radius); background: var(--card); color: var(--secondary); font-size: 0.9rem; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; }
+    
+    .readme-preview h2 {
+      color: var(--primary); font-size: 1.4rem; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
+    
+    .readme-preview h3 {
+      color: var(--accent); font-size: 1.2rem; margin: 1.2rem 0 0.8rem 0; }
+    
+    .readme-preview strong {
+      color: var(--primary); }
+    
+    .readme-preview code {
+      background: var(--code-bg); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.85rem; }
+    
+    .readme-preview ul {
+      margin: 0.5rem 0; padding-left: 1.5rem; }
+    
+    .readme-preview li {
+      margin: 0.3rem 0; }
+    
+    .readme-preview hr {
+      border: none; border-top: 1px solid var(--code-bg); margin: 1rem 0; }
+    
+    .readme-preview p {
+      margin: 0.5rem 0; }
+    
+    .placeholder {
+      color: var(--text-muted); font-style: italic; text-align: center; margin-top: 2rem; }
+    
+    .generate-btn {
+      width: 100%; padding: 1rem; background: var(--primary); color: #fff; border: none; border-radius: var(--radius); font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+    
+    .generate-btn:hover {
+      background: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    
+    .generate-btn i {
+      margin-right: 0.5rem; }
+    
+    @media (max-width: 768px) {
+      .demo-container {
+        grid-template-columns: 1fr; gap: 1rem; }
+    }
+    
+    @media (max-width: 600px) {
+      header h1 { font-size: 2rem; }
+      .card { padding: 1.2rem 0.7rem; }
+      .container { padding: 0 0.5rem; }
+      .theme-toggle { top: 0.5rem; right: 0.5rem; }
+      .demo-controls { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+      <i class="fa-solid fa-sun" id="theme-icon"></i>
+    </button>
+    <div class="icon"><i class="fa-solid fa-robot"></i></div>
+    <h1>auto-readme-lite</h1>
+    <p class="hero-description">
+      ✨ Instantly generate and update beautiful, accurate <strong>README.md</strong> files for any Node.js project.<br>
+      No AI, no cloud, <strong>100% offline</strong> — just pure static analysis and Markdown magic.
+    </p>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#quickstart">Quick Start</a>
+      <a href="#usage">Usage</a>
+      <a href="#demo">Try It Live</a>
+      <a href="#example">Example Output</a>
+      <a href="#how">How It Works</a>
+      <a href="https://github.com/Nom-nom-hub/auto-readme-lite" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+    </nav>
+  </header>
+  <div class="container">
+    <section class="card" id="features">
+      <h2>🚀 Features</h2>
+      <div class="features">
+        <div class="feature">
+          <i class="fa-solid fa-code"></i>
+          <h3>Static Analysis</h3>
+          <p>Parses JS/TS files to detect exported functions, classes, interfaces, and CLI commands.</p>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-terminal"></i>
+          <h3>CLI Command Extraction</h3>
+          <p>Finds commands from <b>commander</b> and <b>yargs</b> for instant CLI docs.</p>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-list-check"></i>
+          <h3>Script Detection</h3>
+          <p>Lists all <code>package.json</code> scripts for easy reference.</p>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-shield-halved"></i>
+          <h3>Content Safe</h3>
+          <p>Only updates auto-generated sections, preserving your custom README content.</p>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-bolt"></i>
+          <h3>Instant & Offline</h3>
+          <p>No AI, no cloud, no waiting. Works 100% offline and is blazing fast.</p>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-file-code"></i>
+          <h3>Markdown Perfection</h3>
+          <p>Generates clean, professional Markdown with code blocks, headers, and formatting.</p>
+        </div>
+      </div>
+    </section>
+    <section class="card" id="quickstart">
+      <h2>⚡ Quick Start</h2>
+      <div class="quick-start">
+        <div class="command-block">
+          <div class="command-block-header">
+            <h3>Quick Install & Run</h3>
+            <button class="copy-btn" onclick="copyToClipboard('npx auto-readme-lite', this)">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="command-block-content">
+            <p>Run directly with npx (no installation needed)</p>
+            <pre><code>npx auto-readme-lite</code></pre>
+          </div>
+        </div>
+        
+        <div class="command-block">
+          <div class="command-block-header">
+            <h3>Global Installation</h3>
+            <button class="copy-btn" onclick="copyToClipboard('npm install -g auto-readme-lite\nauto-readme-lite', this)">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="command-block-content">
+            <p>Or install globally for repeated use</p>
+            <pre><code>npm install -g auto-readme-lite
+auto-readme-lite</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="card" id="usage">
+      <h2>📋 Usage</h2>
+      <div class="usage-content">
+        <div class="command-block">
+          <div class="command-block-header">
+            <h3>Command Options</h3>
+            <button class="copy-btn" onclick="copyToClipboard('Usage: auto-readme-lite [options]\n\nOptions:\n  --dry-run     Preview README output without writing\n  --watch       Watch mode (auto-update on changes)\n  --sections    Comma-separated sections to include (api,cli,scripts,git)\n  --dir         Target project directory\n  --help        Show help', this)">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="command-block-content">
+            <p>Available command line options</p>
+            <pre><code>Usage: auto-readme-lite [options]
+
+Options:
+  --dry-run     Preview README output without writing
+  --watch       Watch mode (auto-update on changes)
+  --sections    Comma-separated sections to include (api,cli,scripts,git)
+  --dir         Target project directory
+  --help        Show help</code></pre>
+          </div>
+        </div>
+        
+        <div class="command-block">
+          <div class="command-block-header">
+            <h3>Example Usage</h3>
+            <button class="copy-btn" onclick="copyToClipboard('# Generate README for current directory\nnpx auto-readme-lite\n\n# Preview without writing\nnpx auto-readme-lite --dry-run\n\n# Watch mode for auto-updates\nnpx auto-readme-lite --watch\n\n# Specific sections only\nnpx auto-readme-lite --sections api,cli,scripts --dir ./my-project', this)">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="command-block-content">
+            <p>Basic usage examples</p>
+            <pre><code># Generate README for current directory
+npx auto-readme-lite
+
+# Preview without writing
+npx auto-readme-lite --dry-run
+
+# Watch mode for auto-updates
+npx auto-readme-lite --watch
+
+# Specific sections only
+npx auto-readme-lite --sections api,cli,scripts --dir ./my-project</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="card" id="example">
+      <h2>📝 Example Output</h2>
+      <div class="example-output">
+        <h2>API Reference</h2>
+        
+        <h3><code>startDripSystem</code></h3>
+        <p><strong>Type:</strong> Function</p>
+        <p><strong>File:</strong> <code>drip-booster.js</code></p>
+        <hr>
+        
+        <h2>CLI Commands</h2>
+        <ul>
+          <li><code>add &lt;a&gt; &lt;b&gt;</code> - Add two numbers</li>
+        </ul>
+        
+        <h2>Available Scripts</h2>
+        <ul>
+          <li><code>start</code> - node index.js</li>
+          <li><code>test</code> - jest</li>
+          <li><code>build</code> - tsc</li>
+        </ul>
+      </div>
+    </section>
+    <section class="card" id="demo">
+      <h2>🧪 Try It Live</h2>
+      <p>Test auto-readme-lite with sample code below. Choose a template or write your own!</p>
+      
+      <div class="demo-controls">
+        <select id="template-select" onchange="loadTemplate()">
+          <option value="">Choose a template...</option>
+          <option value="express">Express.js API</option>
+          <option value="cli">CLI Tool</option>
+          <option value="typescript">TypeScript Library</option>
+          <option value="react">React Component</option>
+        </select>
+        <button onclick="clearDemo()" class="clear-btn">Clear</button>
+      </div>
+      
+      <div class="demo-container">
+        <div class="demo-input">
+          <h3>📝 Input Code</h3>
+          <textarea id="code-input" placeholder="Paste your JavaScript/TypeScript code here..."></textarea>
+        </div>
+        
+        <div class="demo-output">
+          <h3>📄 Generated README</h3>
+          <div id="readme-output" class="readme-preview">
+            <p class="placeholder">Generated README sections will appear here...</p>
+          </div>
+        </div>
+      </div>
+      
+      <button onclick="generateReadme()" class="generate-btn">
+        <i class="fa-solid fa-magic"></i> Generate README
+      </button>
+    </section>
+
+    <section class="card" id="how">
+      <h2>🔍 How It Works</h2>
+      <div class="how-it-works">
+        <div class="step">
+          <div class="step-icon">🔍</div>
+          <div class="step-content">
+            <h3>Scans</h3>
+            <p>Your project for <code>.js</code> and <code>.ts</code> files (excluding <code>node_modules</code>, <code>dist</code>, etc.)</p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-icon">⚙️</div>
+          <div class="step-content">
+            <h3>Parses</h3>
+            <p>Exports, CLI commands, and scripts using <strong>ts-morph</strong> and <strong>Babel</strong></p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-icon">📝</div>
+          <div class="step-content">
+            <h3>Updates</h3>
+            <p>Only the auto-generated sections in your <code>README.md</code></p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-icon">💾</div>
+          <div class="step-content">
+            <h3>Preserves</h3>
+            <p>All your custom content</p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-icon">🔒</div>
+          <div class="step-content">
+            <h3>Works Offline</h3>
+            <p>Never sends code to the cloud</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="links">
+      <a href="https://github.com/Nom-nom-hub/auto-readme-lite" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+      <a href="https://www.npmjs.com/package/auto-readme-lite" target="_blank"><i class="fa-brands fa-npm"></i> NPM</a>
+      <a href="../README.md" target="_blank"><i class="fa-solid fa-book"></i> Project README</a>
+    </div>
+  </div>
+  
+  <script>
+    // Theme management
+    const themeToggle = document.querySelector('.theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+    
+    function updateThemeIcon(theme) {
+      if (theme === 'dark') {
+        themeIcon.className = 'fa-solid fa-moon';
+        themeIcon.style.transform = 'rotate(180deg)';
+      } else {
+        themeIcon.className = 'fa-solid fa-sun';
+        themeIcon.style.transform = 'rotate(0deg)';
+      }
+    }
+    
+    function toggleTheme() {
+      console.log('Toggle theme clicked!');
+      const currentTheme = html.getAttribute('data-theme');
+      console.log('Current theme:', currentTheme);
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      console.log('New theme:', newTheme);
+      
+      html.setAttribute('data-theme', newTheme);
+      console.log('data-theme set to:', html.getAttribute('data-theme'));
+      
+      // Update icon with animation
+      updateThemeIcon(newTheme);
+      
+      // Save preference
+      localStorage.setItem('theme', newTheme);
+      
+      // Add a subtle animation effect
+      document.body.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        document.body.style.transform = 'scale(1)';
+      }, 150);
+    }
+    
+    // Check for saved theme preference or default to 'light'
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    console.log('Initial theme:', currentTheme);
+    html.setAttribute('data-theme', currentTheme);
+    console.log('Initial data-theme:', html.getAttribute('data-theme'));
+    updateThemeIcon(currentTheme);
+    
+    // Check system preference on load
+    if (!localStorage.getItem('theme')) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      updateThemeIcon(prefersDark ? 'dark' : 'light');
+    }
+    
+    // Copy to clipboard functionality
+    function copyToClipboard(text, button) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        button.classList.add('copied');
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+    }
+    
+    // Demo functionality
+    const templates = {
+      express: `const express = require('express');
+const { program } = require('commander');
+
+/**
+ * User authentication middleware
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Next middleware function
+ */
+function authMiddleware(req, res, next) {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  next();
+}
+
+/**
+ * Get user by ID
+ * @param {string} id - User ID
+ * @returns {Promise<Object>} User object
+ */
+async function getUserById(id) {
+  return { id, name: 'John Doe', email: 'john@example.com' };
+}
+
+/**
+ * Create new user
+ * @param {Object} userData - User data
+ * @returns {Promise<Object>} Created user
+ */
+async function createUser(userData) {
+  return { id: '123', ...userData };
+}
+
+const app = express();
+
+program
+  .command('start')
+  .description('Start the server')
+  .option('-p, --port <number>', 'Port number', '3000')
+  .action((options) => {
+    app.listen(options.port, () => {
+      console.log(\`Server running on port \${options.port}\`);
+    });
+  });
+
+module.exports = {
+  app,
+  authMiddleware,
+  getUserById,
+  createUser
+};`,
+      
+      cli: `#!/usr/bin/env node
+const { program } = require('commander');
+const yargs = require('yargs');
+
+/**
+ * Calculate fibonacci number
+ * @param {number} n - Position in sequence
+ * @returns {number} Fibonacci number
+ */
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+/**
+ * Generate random password
+ * @param {number} length - Password length
+ * @returns {string} Random password
+ */
+function generatePassword(length = 12) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+program
+  .name('my-cli-tool')
+  .description('A powerful CLI utility')
+  .version('1.0.0');
+
+program
+  .command('fib <n>')
+  .description('Calculate fibonacci number')
+  .action((n) => {
+    console.log(\`Fibonacci(\${n}) = \${fibonacci(parseInt(n))}\`);
+  });
+
+program
+  .command('password')
+  .description('Generate random password')
+  .option('-l, --length <number>', 'Password length', '12')
+  .action((options) => {
+    console.log(\`Generated password: \${generatePassword(parseInt(options.length))}\`);
+  });
+
+yargs
+  .command('encrypt <text>', 'Encrypt text', (yargs) => {
+    return yargs.option('key', {
+      alias: 'k',
+      type: 'string',
+      description: 'Encryption key'
+    });
+  }, (argv) => {
+    console.log(\`Encrypting: \${argv.text} with key: \${argv.key}\`);
+  })
+  .help()
+  .argv;
+
+module.exports = {
+  fibonacci,
+  generatePassword
+};`,
+      
+      typescript: `/**
+ * TypeScript utility library
+ */
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  age?: number;
+}
+
+export interface Config {
+  port: number;
+  host: string;
+  debug: boolean;
+}
+
+/**
+ * User service class
+ */
+export class UserService {
+  private users: User[] = [];
+
+  /**
+   * Add a new user
+   * @param user - User object to add
+   * @returns Promise<User> - Added user
+   */
+  async addUser(user: User): Promise<User> {
+    this.users.push(user);
+    return user;
+  }
+
+  /**
+   * Get user by ID
+   * @param id - User ID
+   * @returns Promise<User | null> - User or null
+   */
+  async getUserById(id: string): Promise<User | null> {
+    return this.users.find(u => u.id === id) || null;
+  }
+
+  /**
+   * Update user
+   * @param id - User ID
+   * @param updates - User updates
+   * @returns Promise<User | null> - Updated user
+   */
+  async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+    const userIndex = this.users.findIndex(u => u.id === id);
+    if (userIndex === -1) return null;
+    
+    this.users[userIndex] = { ...this.users[userIndex], ...updates };
+    return this.users[userIndex];
+  }
+}
+
+export const defaultConfig: Config = {
+  port: 3000,
+  host: 'localhost',
+  debug: false
+};
+
+export type UserId = string;
+export type Email = string;`,
+      
+      react: `import React, { useState, useEffect } from 'react';
+
+/**
+ * User interface
+ */
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+/**
+ * UserCard component props
+ */
+interface UserCardProps {
+  user: User;
+  onEdit?: (user: User) => void;
+  onDelete?: (id: string) => void;
+}
+
+/**
+ * UserCard component
+ * @param props - Component props
+ * @returns JSX.Element
+ */
+export const UserCard: React.FC<UserCardProps> = ({ user, onEdit, onDelete }) => {
+  return (
+    <div className="user-card">
+      <h3>{user.name}</h3>
+      <p>{user.email}</p>
+      {onEdit && <button onClick={() => onEdit(user)}>Edit</button>}
+      {onDelete && <button onClick={() => onDelete(user.id)}>Delete</button>}
+    </div>
+  );
+};
+
+/**
+ * UserList component
+ * @returns JSX.Element
+ */
+export const UserList: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  /**
+   * Fetch users from API
+   */
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div className="user-list">
+      {users.map(user => (
+        <UserCard key={user.id} user={user} />
+      ))}
+    </div>
+  );
+};
+
+export default UserList;`
+    };
+
+    function loadTemplate() {
+      const select = document.getElementById('template-select');
+      const codeInput = document.getElementById('code-input');
+      const template = templates[select.value];
+      
+      if (template) {
+        codeInput.value = template;
+        generateReadme();
+      }
+    }
+
+    function clearDemo() {
+      document.getElementById('code-input').value = '';
+      document.getElementById('readme-output').innerHTML = '<p class="placeholder">Generated README sections will appear here...</p>';
+      document.getElementById('template-select').value = '';
+    }
+
+    function generateReadme() {
+      const code = document.getElementById('code-input').value;
+      const output = document.getElementById('readme-output');
+      
+      if (!code.trim()) {
+        output.innerHTML = '<p class="placeholder">Please enter some code first...</p>';
+        return;
+      }
+
+      // Simple parser for demo purposes
+      const exports = [];
+      const cliCommands = [];
+      const functions = [];
+      
+      // Extract function declarations
+      const functionMatches = code.match(/function\s+(\w+)\s*\([^)]*\)\s*{/g);
+      if (functionMatches) {
+        functionMatches.forEach(match => {
+          const name = match.match(/function\s+(\w+)/)[1];
+          functions.push(name);
+        });
+      }
+
+      // Extract arrow functions
+      const arrowMatches = code.match(/(\w+)\s*[:=]\s*(?:async\s*)?\([^)]*\)\s*=>/g);
+      if (arrowMatches) {
+        arrowMatches.forEach(match => {
+          const name = match.match(/(\w+)\s*[:=]/)[1];
+          if (name !== 'const' && name !== 'let' && name !== 'var') {
+            functions.push(name);
+          }
+        });
+      }
+
+      // Extract CLI commands
+      const cliMatches = code.match(/\.command\(['"`]([^'"`]+)['"`]/g);
+      if (cliMatches) {
+        cliMatches.forEach(match => {
+          const command = match.match(/\.command\(['"`]([^'"`]+)['"`]/)[1];
+          cliCommands.push(command);
+        });
+      }
+
+      // Extract exports
+      const exportMatches = code.match(/module\.exports\s*=\s*{([^}]+)}/);
+      if (exportMatches) {
+        const exportContent = exportMatches[1];
+        const exportNames = exportContent.match(/(\w+)/g);
+        if (exportNames) {
+          exports.push(...exportNames);
+        }
+      }
+
+      // Generate README content
+      let readmeContent = '';
+      
+      if (functions.length > 0 || exports.length > 0) {
+        readmeContent += '## API Reference\n\n';
+        
+        [...new Set([...functions, ...exports])].forEach(item => {
+          readmeContent += '### `' + item + '`\n\n';
+          readmeContent += '**Type:** Function\n\n';
+          readmeContent += '**File:** `demo.js`\n\n';
+          readmeContent += '---\n\n';
+        });
+      }
+      
+      if (cliCommands.length > 0) {
+        readmeContent += '## CLI Commands\n\n';
+        cliCommands.forEach(command => {
+          readmeContent += '- `' + command + '` - CLI command\n';
+        });
+        readmeContent += '\n';
+      }
+      
+      if (!readmeContent) {
+        readmeContent = '<p class="placeholder">No exports or CLI commands found. Try adding some functions or CLI commands!</p>';
+      }
+
+      // Convert markdown to HTML for better display
+      readmeContent = readmeContent
+        .replace(/## (.*?)\n/g, '<h2>$1</h2>\n')
+        .replace(/### (.*?)\n/g, '<h3>$1</h3>\n')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/- (.*?)\n/g, '<li>$1</li>\n')
+        .replace(/---\n/g, '<hr>\n')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+      
+      // Wrap lists properly
+      readmeContent = readmeContent.replace(/(<li>.*?<\/li>)+/g, function(match) {
+        return '<ul>' + match + '</ul>';
+      });
+
+      output.innerHTML = readmeContent;
+    }
+  </script>
+</body>
+</html> 
