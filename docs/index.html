@@ -1092,17 +1092,57 @@ export default UserList;`
         return;
       }
 
-      // Simple parser for demo purposes
+      // Enhanced parser for TypeScript and modern JavaScript
       const exports = [];
       const cliCommands = [];
       const functions = [];
+      const classes = [];
+      const interfaces = [];
+      const types = [];
+      const constants = [];
       
-      // Extract function declarations
-      const functionMatches = code.match(/function\s+(\w+)\s*\([^)]*\)\s*{/g);
+      // Extract ES6 exports
+      const exportPatterns = [
+        // export const/let/var
+        /export\s+(?:const|let|var)\s+(\w+)/g,
+        // export function
+        /export\s+function\s+(\w+)/g,
+        // export class
+        /export\s+class\s+(\w+)/g,
+        // export interface
+        /export\s+interface\s+(\w+)/g,
+        // export type
+        /export\s+type\s+(\w+)/g,
+        // export default
+        /export\s+default\s+(?:function\s+)?(\w+)/g,
+        // export { name }
+        /export\s*\{\s*(\w+)/g,
+        // export { name as alias }
+        /export\s*\{\s*(\w+)\s+as\s+\w+/g
+      ];
+      
+      exportPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/\s+(\w+)/);
+            const braceMatch = match.match(/\{\s*(\w+)/);
+            const name = (nameMatch && nameMatch[1]) || (braceMatch && braceMatch[1]);
+            if (name && !exports.includes(name)) {
+              exports.push(name);
+            }
+          });
+        }
+      });
+
+      // Extract function declarations (including async)
+      const functionMatches = code.match(/(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\)/g);
       if (functionMatches) {
         functionMatches.forEach(match => {
           const name = match.match(/function\s+(\w+)/)[1];
-          functions.push(name);
+          if (!functions.includes(name)) {
+            functions.push(name);
+          }
         });
       }
 
@@ -1111,41 +1151,114 @@ export default UserList;`
       if (arrowMatches) {
         arrowMatches.forEach(match => {
           const name = match.match(/(\w+)\s*[:=]/)[1];
-          if (name !== 'const' && name !== 'let' && name !== 'var') {
+          if (name !== 'const' && name !== 'let' && name !== 'var' && !functions.includes(name)) {
             functions.push(name);
           }
         });
       }
 
-      // Extract CLI commands
-      const cliMatches = code.match(/\.command\(['"`]([^'"`]+)['"`]/g);
-      if (cliMatches) {
-        cliMatches.forEach(match => {
-          const command = match.match(/\.command\(['"`]([^'"`]+)['"`]/)[1];
-          cliCommands.push(command);
+      // Extract classes
+      const classMatches = code.match(/(?:export\s+)?class\s+(\w+)/g);
+      if (classMatches) {
+        classMatches.forEach(match => {
+          const name = match.match(/class\s+(\w+)/)[1];
+          if (!classes.includes(name)) {
+            classes.push(name);
+          }
         });
       }
 
-      // Extract exports
-      const exportMatches = code.match(/module\.exports\s*=\s*{([^}]+)}/);
-      if (exportMatches) {
-        const exportContent = exportMatches[1];
+      // Extract interfaces
+      const interfaceMatches = code.match(/(?:export\s+)?interface\s+(\w+)/g);
+      if (interfaceMatches) {
+        interfaceMatches.forEach(match => {
+          const name = match.match(/interface\s+(\w+)/)[1];
+          if (!interfaces.includes(name)) {
+            interfaces.push(name);
+          }
+        });
+      }
+
+      // Extract types
+      const typeMatches = code.match(/(?:export\s+)?type\s+(\w+)/g);
+      if (typeMatches) {
+        typeMatches.forEach(match => {
+          const name = match.match(/type\s+(\w+)/)[1];
+          if (!types.includes(name)) {
+            types.push(name);
+          }
+        });
+      }
+
+      // Extract constants
+      const constMatches = code.match(/(?:export\s+)?(?:const|let|var)\s+(\w+)/g);
+      if (constMatches) {
+        constMatches.forEach(match => {
+          const name = match.match(/(?:const|let|var)\s+(\w+)/)[1];
+          if (!constants.includes(name)) {
+            constants.push(name);
+          }
+        });
+      }
+
+      // Extract CLI commands
+      const cliPatterns = [
+        // commander .command('name')
+        /\.command\(['"`]([^'"`]+)['"`]/g,
+        // yargs .command('name')
+        /\.command\(['"`]([^'"`]+)['"`]/g,
+        // program.command('name')
+        /program\.command\(['"`]([^'"`]+)['"`]/g
+      ];
+      
+      cliPatterns.forEach(pattern => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const command = match.match(/['"`]([^'"`]+)['"`]/)[1];
+            if (!cliCommands.includes(command)) {
+              cliCommands.push(command);
+            }
+          });
+        }
+      });
+
+      // Extract CommonJS exports
+      const commonjsMatches = code.match(/module\.exports\s*=\s*\{([^}]+)\}/);
+      if (commonjsMatches) {
+        const exportContent = commonjsMatches[1];
         const exportNames = exportContent.match(/(\w+)/g);
         if (exportNames) {
-          exports.push(...exportNames);
+          exportNames.forEach(name => {
+            if (!exports.includes(name)) {
+              exports.push(name);
+            }
+          });
         }
       }
 
       // Generate README content
       let readmeContent = '';
       
-      if (functions.length > 0 || exports.length > 0) {
+      const allItems = functions.concat(classes).concat(interfaces).concat(types).concat(constants).concat(exports);
+      const uniqueItems = allItems.filter((item, index) => allItems.indexOf(item) === index);
+      
+      if (uniqueItems.length > 0) {
         readmeContent += '## API Reference\n\n';
         
-        [...new Set([...functions, ...exports])].forEach(item => {
+        uniqueItems.forEach(item => {
           readmeContent += '### `' + item + '`\n\n';
-          readmeContent += '**Type:** Function\n\n';
-          readmeContent += '**File:** `demo.js`\n\n';
+          
+          // Determine type
+          let type = 'Export';
+          if (classes.includes(item)) type = 'Class';
+          else if (interfaces.includes(item)) type = 'Interface';
+          else if (types.includes(item)) type = 'Type';
+          else if (functions.includes(item)) type = 'Function';
+          else if (constants.includes(item)) type = 'Constant';
+          
+          readmeContent += '**Type:** ' + type + '\n\n';
+          readmeContent += '**File:** `demo.ts`\n\n';
           readmeContent += '---\n\n';
         });
       }
@@ -1159,7 +1272,7 @@ export default UserList;`
       }
       
       if (!readmeContent) {
-        readmeContent = '<p class="placeholder">No exports or CLI commands found. Try adding some functions or CLI commands!</p>';
+        readmeContent = 'No exports or CLI commands found. Try adding some functions or CLI commands!';
       }
 
       // Convert markdown to HTML for better display
