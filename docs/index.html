@@ -1093,6 +1093,9 @@ export default UserList;`
       }
 
       // Enhanced parser for TypeScript and modern JavaScript
+      // Note: This is a simplified regex-based parser for demo purposes.
+      // For production use, consider using a proper AST parser (TypeScript compiler API or Babel)
+      // for more reliable export and definition detection.
       const exports = [];
       const cliCommands = [];
       const functions = [];
@@ -1101,7 +1104,7 @@ export default UserList;`
       const types = [];
       const constants = [];
       
-      // Extract ES6 exports
+      // Extract ES6 exports with improved pattern matching
       const exportPatterns = [
         // export const/let/var
         /export\s+(?:const|let|var)\s+(\w+)/g,
@@ -1114,33 +1117,49 @@ export default UserList;`
         // export type
         /export\s+type\s+(\w+)/g,
         // export default
-        /export\s+default\s+(?:function\s+)?(\w+)/g,
-        // export { name }
-        /export\s*\{\s*(\w+)/g,
-        // export { name as alias }
-        /export\s*\{\s*(\w+)\s+as\s+\w+/g
+        /export\s+default\s+(?:function\s+)?(\w+)/g
       ];
       
+      // Handle basic export patterns
       exportPatterns.forEach(pattern => {
         const matches = code.match(pattern);
         if (matches) {
           matches.forEach(match => {
             const nameMatch = match.match(/\s+(\w+)/);
-            const braceMatch = match.match(/\{\s*(\w+)/);
-            const name = (nameMatch && nameMatch[1]) || (braceMatch && braceMatch[1]);
+            const name = nameMatch && nameMatch[1];
             if (name && !exports.includes(name)) {
               exports.push(name);
             }
           });
         }
       });
+      
+      // Handle destructured exports: export { foo, bar, baz as qux }
+      const destructuredExportPattern = /export\s*\{([^}]+)\}/g;
+      let destructuredMatch;
+      while ((destructuredMatch = destructuredExportPattern.exec(code)) !== null) {
+        const exportList = destructuredMatch[1];
+        // Split by comma and handle each export
+        const exportItems = exportList.split(',').map(item => item.trim());
+        exportItems.forEach(item => {
+          // Handle "name as alias" pattern
+          const asMatch = item.match(/^(\w+)\s+as\s+\w+$/);
+          const simpleMatch = item.match(/^(\w+)$/);
+          const name = (asMatch && asMatch[1]) || (simpleMatch && simpleMatch[1]);
+          if (name && !exports.includes(name)) {
+            exports.push(name);
+          }
+        });
+      }
 
-      // Extract function declarations (including async)
-      const functionMatches = code.match(/(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\)/g);
+      // Extract function declarations (including async, generator, and TypeScript type annotations)
+      const functionMatches = code.match(/(?:export\s+)?(?:async\s+)?function\s*\*?\s+(\w+)\s*\([^)]*\)\s*(?::\s*[\w<>{}\[\],\s]+)?/g);
       if (functionMatches) {
         functionMatches.forEach(match => {
-          const name = match.match(/function\s+(\w+)/)[1];
-          if (!functions.includes(name)) {
+          // Match function name after 'function', possibly with '*', and allow for type annotations
+          const nameMatch = match.match(/function\s*\*?\s+(\w+)/);
+          const name = nameMatch && nameMatch[1];
+          if (name && !functions.includes(name)) {
             functions.push(name);
           }
         });
@@ -1157,57 +1176,34 @@ export default UserList;`
         });
       }
 
-      // Extract classes
-      const classMatches = code.match(/(?:export\s+)?class\s+(\w+)/g);
-      if (classMatches) {
-        classMatches.forEach(match => {
-          const name = match.match(/class\s+(\w+)/)[1];
-          if (!classes.includes(name)) {
-            classes.push(name);
-          }
-        });
-      }
+      // Extract classes, interfaces, types, and constants in a single pass
+      const declarationPatterns = [
+        { pattern: /(?:export\s+)?class\s+(\w+)/g, target: classes },
+        { pattern: /(?:export\s+)?interface\s+(\w+)/g, target: interfaces },
+        { pattern: /(?:export\s+)?type\s+(\w+)/g, target: types },
+        { pattern: /(?:export\s+)?(?:const|let|var)\s+(\w+)/g, target: constants }
+      ];
+      
+      declarationPatterns.forEach(({ pattern, target }) => {
+        const matches = code.match(pattern);
+        if (matches) {
+          matches.forEach(match => {
+            const nameMatch = match.match(/\s+(\w+)/);
+            const name = nameMatch && nameMatch[1];
+            if (name && !target.includes(name)) {
+              target.push(name);
+            }
+          });
+        }
+      });
 
-      // Extract interfaces
-      const interfaceMatches = code.match(/(?:export\s+)?interface\s+(\w+)/g);
-      if (interfaceMatches) {
-        interfaceMatches.forEach(match => {
-          const name = match.match(/interface\s+(\w+)/)[1];
-          if (!interfaces.includes(name)) {
-            interfaces.push(name);
-          }
-        });
-      }
-
-      // Extract types
-      const typeMatches = code.match(/(?:export\s+)?type\s+(\w+)/g);
-      if (typeMatches) {
-        typeMatches.forEach(match => {
-          const name = match.match(/type\s+(\w+)/)[1];
-          if (!types.includes(name)) {
-            types.push(name);
-          }
-        });
-      }
-
-      // Extract constants
-      const constMatches = code.match(/(?:export\s+)?(?:const|let|var)\s+(\w+)/g);
-      if (constMatches) {
-        constMatches.forEach(match => {
-          const name = match.match(/(?:const|let|var)\s+(\w+)/)[1];
-          if (!constants.includes(name)) {
-            constants.push(name);
-          }
-        });
-      }
-
-      // Extract CLI commands
+      // CLI command extraction:
+      // This pattern matches common usages in Commander.js, yargs, and similar frameworks:
+      //   .command('name') or program.command('name')
+      // Note: This may not cover all CLI libraries or custom command setups.
+      // Extend or adjust as needed for other frameworks.
       const cliPatterns = [
-        // commander .command('name')
         /\.command\(['"`]([^'"`]+)['"`]/g,
-        // yargs .command('name')
-        /\.command\(['"`]([^'"`]+)['"`]/g,
-        // program.command('name')
         /program\.command\(['"`]([^'"`]+)['"`]/g
       ];
       
